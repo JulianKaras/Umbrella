@@ -1,9 +1,14 @@
 package com.barkerville.umbrella;
 
+import android.Manifest;
+import android.content.pm.PackageManager;
+import android.location.Location;
+import android.location.LocationListener;
 import android.os.AsyncTask;
 import android.os.Bundle;
 import android.support.design.widget.FloatingActionButton;
 import android.support.design.widget.Snackbar;
+import android.support.v4.content.ContextCompat;
 import android.support.v7.app.AppCompatActivity;
 import android.support.v7.widget.Toolbar;
 import android.util.Log;
@@ -11,6 +16,10 @@ import android.view.View;
 import android.view.Menu;
 import android.view.MenuItem;
 import android.widget.TextView;
+
+import com.google.android.gms.common.api.GoogleApiClient;
+import com.google.android.gms.location.LocationRequest;
+import com.google.android.gms.location.LocationServices;
 
 import org.json.JSONArray;
 import org.json.JSONObject;
@@ -22,7 +31,19 @@ import java.io.InputStreamReader;
 import java.net.HttpURLConnection;
 import java.net.URL;
 
-public class Umbrella extends AppCompatActivity {
+public class Umbrella extends AppCompatActivity implements GoogleApiClient.OnConnectionFailedListener,
+        GoogleApiClient.ConnectionCallbacks, LocationListener {
+
+
+    private GoogleApiClient mGoogleApiClient;
+    protected Location mCurrentLocation;
+    double lat, long;
+    lat = mCurrentLocation.getLatitude();
+    long = mCurrentLocation.getLongitude()));
+
+    public String updatedURL = new String("http://api.openweathermap.org/data/2.5/forecast/weather?lat=" + lat +
+            "&lon=" + long + "&APPID=4a0c624b968df9180851beee9fe34be0");
+
 
     @Override
     protected void onCreate(Bundle savedInstanceState) {
@@ -31,8 +52,16 @@ public class Umbrella extends AppCompatActivity {
         Toolbar toolbar = (Toolbar) findViewById(R.id.toolbar);
         setSupportActionBar(toolbar);
 
+
+
         WebServiceTask webserviceTask = new WebServiceTask();
-        webserviceTask.execute("Julian!!!");
+        webserviceTask.execute();
+
+        mGoogleApiClient = new GoogleApiClient.Builder(this)
+                .addConnectionCallbacks(this)
+                .addOnConnectionFailedListener(this)
+                .addApi(LocationServices.API)
+                .build();
 
         FloatingActionButton fab = (FloatingActionButton) findViewById(R.id.fab);
         fab.setOnClickListener(new View.OnClickListener() {
@@ -42,7 +71,17 @@ public class Umbrella extends AppCompatActivity {
                         .setAction("Action", null).show();
             }
         });
+
+
     }
+
+    protected void onStart(){
+        super.onStart();
+        mGoogleApiClient.connect();
+    }
+
+
+
 
     @Override
     public boolean onCreateOptionsMenu(Menu menu) {
@@ -65,6 +104,31 @@ public class Umbrella extends AppCompatActivity {
 
         return super.onOptionsItemSelected(item);
     }
+
+    @Override
+    public void onConnected(Bundle connectionHint) {
+        LocationRequest mLocationRequest = new LocationRequest();
+        int permissionCheck = ContextCompat.checkSelfPermission(Umbrella.this, Manifest.permission.
+                ACCESS_FINE_LOCATION);
+        {
+            if (permissionCheck == PackageManager.PERMISSION_GRANTED)
+                LocationServices.FusedLocationApi.requestLocationUpdates(
+                        mGoogleApiClient, mLocationRequest, this);
+        }
+        
+    }
+    public void onLocationChanged(Location mCurrentLocation) {
+
+    }
+
+    public double getLatitude(){
+
+    }
+
+    public double getLongitude() {
+
+    }
+
     private class WebServiceTask extends AsyncTask<String, String, String> {
 
         //HttpURLConnection urlConnection = (HttpURLConnection) url.openConnection();
@@ -85,7 +149,7 @@ public class Umbrella extends AppCompatActivity {
             //HttpURLConnection urlConnection = null;
 
             try {
-                URL url = new URL("http://api.openweathermap.org/data/2.5/forecast/city?id=6058560&APPID=4a0c624b968df9180851beee9fe34be0");
+                URL url = new URL(updatedURL);
                 HttpURLConnection urlConnection = (HttpURLConnection) url.openConnection();
                 useUmbrellaStr = useUmbrella(urlConnection.getInputStream());
             } catch (IOException e) {

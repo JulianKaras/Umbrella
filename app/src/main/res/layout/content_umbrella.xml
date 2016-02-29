@@ -13,9 +13,9 @@
     tools:showIn="@layout/activity_umbrella">
 
     <TextView
-        android:id="@+id/use_umbrella"
-        android:layout_width="wrap_content"
-        android:layout_height="wrap_content"
-        android:text="@string/use_umbrella"
-        android:textSize="46sp"/>
+    android:id="@+id/use_umbrella"
+    android:layout_width="wrap_content"
+    android:layout_height="wrap_content"
+    android:text="@string/use_umbrella"
+    android:textSize="46sp"/>
 </RelativeLayout>
