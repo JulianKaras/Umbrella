@@ -3,12 +3,11 @@ package com.barkerville.umbrella;
 import android.Manifest;
 import android.content.pm.PackageManager;
 import android.location.Location;
-import android.location.LocationListener;
 import android.os.AsyncTask;
 import android.os.Bundle;
 import android.support.design.widget.FloatingActionButton;
 import android.support.design.widget.Snackbar;
-import android.support.v4.content.ContextCompat;
+import android.support.v4.app.ActivityCompat;
 import android.support.v7.app.AppCompatActivity;
 import android.support.v7.widget.Toolbar;
 import android.util.Log;
@@ -17,8 +16,8 @@ import android.view.Menu;
 import android.view.MenuItem;
 import android.widget.TextView;
 
+import com.google.android.gms.common.ConnectionResult;
 import com.google.android.gms.common.api.GoogleApiClient;
-import com.google.android.gms.location.LocationRequest;
 import com.google.android.gms.location.LocationServices;
 
 import org.json.JSONArray;
@@ -31,19 +30,9 @@ import java.io.InputStreamReader;
 import java.net.HttpURLConnection;
 import java.net.URL;
 
-public class Umbrella extends AppCompatActivity implements GoogleApiClient.OnConnectionFailedListener,
-        GoogleApiClient.ConnectionCallbacks, LocationListener {
+public class Umbrella extends AppCompatActivity implements GoogleApiClient.ConnectionCallbacks, GoogleApiClient.OnConnectionFailedListener {
 
-
-    private GoogleApiClient mGoogleApiClient;
-    protected Location mCurrentLocation;
-    double lat, long;
-    lat = mCurrentLocation.getLatitude();
-    long = mCurrentLocation.getLongitude()));
-
-    public String updatedURL = new String("http://api.openweathermap.org/data/2.5/forecast/weather?lat=" + lat +
-            "&lon=" + long + "&APPID=4a0c624b968df9180851beee9fe34be0");
-
+    protected GoogleApiClient mGoogleApiClient;
 
     @Override
     protected void onCreate(Bundle savedInstanceState) {
@@ -52,34 +41,24 @@ public class Umbrella extends AppCompatActivity implements GoogleApiClient.OnCon
         Toolbar toolbar = (Toolbar) findViewById(R.id.toolbar);
         setSupportActionBar(toolbar);
 
-
-
-        WebServiceTask webserviceTask = new WebServiceTask();
-        webserviceTask.execute();
-
         mGoogleApiClient = new GoogleApiClient.Builder(this)
                 .addConnectionCallbacks(this)
                 .addOnConnectionFailedListener(this)
                 .addApi(LocationServices.API)
                 .build();
 
-        FloatingActionButton fab = (FloatingActionButton) findViewById(R.id.fab);
+
+        // webserviceTask.execute("Julian!!!");
+
+       /* FloatingActionButton fab = (FloatingActionButton) findViewById(R.id.fab);
         fab.setOnClickListener(new View.OnClickListener() {
             @Override
             public void onClick(View view) {
                 Snackbar.make(view, "Replace with your own action", Snackbar.LENGTH_LONG)
                         .setAction("Action", null).show();
             }
-        });
-
-
+        });*/
     }
-
-    protected void onStart(){
-        super.onStart();
-        mGoogleApiClient.connect();
-    }
-
 
 
 
@@ -106,27 +85,39 @@ public class Umbrella extends AppCompatActivity implements GoogleApiClient.OnCon
     }
 
     @Override
-    public void onConnected(Bundle connectionHint) {
-        LocationRequest mLocationRequest = new LocationRequest();
-        int permissionCheck = ContextCompat.checkSelfPermission(Umbrella.this, Manifest.permission.
-                ACCESS_FINE_LOCATION);
-        {
-            if (permissionCheck == PackageManager.PERMISSION_GRANTED)
-                LocationServices.FusedLocationApi.requestLocationUpdates(
-                        mGoogleApiClient, mLocationRequest, this);
+    public void onConnected(Bundle bundle) {
+        if (ActivityCompat.checkSelfPermission
+                (this, Manifest.permission.ACCESS_FINE_LOCATION)
+                != PackageManager.PERMISSION_GRANTED && ActivityCompat.checkSelfPermission
+                (this, Manifest.permission.ACCESS_COARSE_LOCATION) != PackageManager.PERMISSION_GRANTED) {
+            // TODO: Consider calling
+            //    ActivityCompat#requestPermissions
+            // here to request the missing permissions, and then overriding
+            //   public void onRequestPermissionsResult(int requestCode, String[] permissions,
+            //                                          int[] grantResults)
+            // to handle the case where the user grants the permission. See the documentation
+            // for ActivityCompat#requestPermissions for more details.
+            return;
         }
-        
-    }
-    public void onLocationChanged(Location mCurrentLocation) {
-
-    }
-
-    public double getLatitude(){
-
+        Location mCurrentLocation = LocationServices.FusedLocationApi.getLastLocation(mGoogleApiClient);
+        WebServiceTask webserviceTask = new WebServiceTask();
+        webserviceTask.execute(String.valueOf(mCurrentLocation.getLatitude()),String.valueOf(mCurrentLocation.getLatitude()));
     }
 
-    public double getLongitude() {
+    @Override
+    public void onConnectionSuspended(int i) {
 
+    }
+
+    @Override
+    public void onConnectionFailed(ConnectionResult connectionResult) {
+
+    }
+
+    @Override
+    protected void onStart() {
+        super.onStart();
+        mGoogleApiClient.connect();
     }
 
     private class WebServiceTask extends AsyncTask<String, String, String> {
@@ -149,7 +140,8 @@ public class Umbrella extends AppCompatActivity implements GoogleApiClient.OnCon
             //HttpURLConnection urlConnection = null;
 
             try {
-                URL url = new URL(updatedURL);
+                URL url = new URL("http://api.openweathermap.org/data/2.5/forecast/weather?lat="+params[0]+"&lon="
+                        +params[1]+"&APPID=4a0c624b968df9180851beee9fe34be0");
                 HttpURLConnection urlConnection = (HttpURLConnection) url.openConnection();
                 useUmbrellaStr = useUmbrella(urlConnection.getInputStream());
             } catch (IOException e) {
@@ -161,7 +153,7 @@ public class Umbrella extends AppCompatActivity implements GoogleApiClient.OnCon
             }
             return useUmbrellaStr;
 
-           // return "Hello " + params[0];
+            // return "Hello " + params[0];
         }
         protected String useUmbrella(InputStream in){
             StringBuilder stringBuilder = new StringBuilder();
@@ -174,10 +166,10 @@ public class Umbrella extends AppCompatActivity implements GoogleApiClient.OnCon
                 while((line = bufferedReader.readLine())!= null) {
                     stringBuilder.append(line + "\n");
                 }
-                    JSONObject forecastJson = new JSONObject(stringBuilder.toString());
-                    JSONArray weatherArray = forecastJson.getJSONArray("list");
-                    JSONObject todayForecast = weatherArray.getJSONObject(0);
-                    Log.i("Returned data",stringBuilder.toString());
+                JSONObject forecastJson = new JSONObject(stringBuilder.toString());
+                JSONArray weatherArray = forecastJson.getJSONArray("list");
+                JSONObject todayForecast = weatherArray.getJSONObject(0);
+                Log.i("Returned data",stringBuilder.toString());
 
                 if (todayForecast.has("rain") || todayForecast.has("snow")) {
                     return("Yes");
@@ -186,7 +178,7 @@ public class Umbrella extends AppCompatActivity implements GoogleApiClient.OnCon
                 }
 
             }catch (Exception e) { Log.e("MainActivity", "Error", e);
-        } finally {
+            } finally {
                 if(bufferedReader != null){
                     try{
                         bufferedReader.close();
@@ -195,8 +187,6 @@ public class Umbrella extends AppCompatActivity implements GoogleApiClient.OnCon
                     }
                 }
             }   return "Don't know, sorry about that.";
-            }
         }
     }
-
-
+}
