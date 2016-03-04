@@ -14,6 +14,7 @@ import android.util.Log;
 import android.view.View;
 import android.view.Menu;
 import android.view.MenuItem;
+import android.widget.Button;
 import android.widget.TextView;
 
 import com.google.android.gms.common.ConnectionResult;
@@ -34,10 +35,30 @@ public class Umbrella extends AppCompatActivity implements GoogleApiClient.Conne
 
     protected GoogleApiClient mGoogleApiClient;
 
+
+
     @Override
     protected void onCreate(Bundle savedInstanceState) {
         super.onCreate(savedInstanceState);
         setContentView(R.layout.activity_umbrella);
+
+        Button button1 (Button)findViewById(R.id.setAlarm);
+        button1.setOnClickListener(new View.onClickListener(){
+            @Override
+        public void onClick (View v){
+                setAlarm();
+            }
+        } );
+
+        Button button2 (Button)findViewById(R.id.setAlarm);
+        button2.setOnClickListener(new View.onClickListener(){
+            @Override
+        public void onClick (View v){
+                cancelAlarm();
+            }
+        })
+
+
         Toolbar toolbar = (Toolbar) findViewById(R.id.toolbar);
         setSupportActionBar(toolbar);
 
@@ -60,8 +81,15 @@ public class Umbrella extends AppCompatActivity implements GoogleApiClient.Conne
         });*/
     }
 
+    protected void setAlarm(){
+        Alarm alarm = new Alarm();
+        alarm.setAlarm(this, latitude, longitude);
+    }
 
-
+    protected void cancelAlarm(){
+        Alarm alarm = new Alarm();
+        alarm.cancelAlarm(tnis, latitude, longitude);
+    }
     @Override
     public boolean onCreateOptionsMenu(Menu menu) {
         // Inflate the menu; this adds items to the action bar if it is present.
@@ -101,7 +129,7 @@ public class Umbrella extends AppCompatActivity implements GoogleApiClient.Conne
         }
         Location mCurrentLocation = LocationServices.FusedLocationApi.getLastLocation(mGoogleApiClient);
         WebServiceTask webserviceTask = new WebServiceTask();
-        webserviceTask.execute(String.valueOf(mCurrentLocation.getLatitude()),String.valueOf(mCurrentLocation.getLatitude()));
+        webserviceTask.execute(String.valueOf(mCurrentLocation.getLatitude()), String.valueOf(mCurrentLocation.getLatitude()));
     }
 
     @Override
@@ -119,8 +147,9 @@ public class Umbrella extends AppCompatActivity implements GoogleApiClient.Conne
         super.onStart();
         mGoogleApiClient.connect();
     }
+}
 
-    private class WebServiceTask extends AsyncTask<String, String, String> {
+   /* private class WebServiceTask extends AsyncTask<String, String, String> {
 
         //HttpURLConnection urlConnection = (HttpURLConnection) url.openConnection();
         //InputStream in = urlConnection.getInputStream();
@@ -190,3 +219,5 @@ public class Umbrella extends AppCompatActivity implements GoogleApiClient.Conne
         }
     }
 }
+
+*/
